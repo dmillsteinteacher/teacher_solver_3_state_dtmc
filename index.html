@@ -21,7 +21,7 @@
             const [budget, setBudget] = useState(500);
             const [targets, setTargets] = useState({
                 s1Min: 0.50, s1Max: 1.00,
-                s2Min: 0.45, s2Max: 1.00,
+                s2Min: 0.40, s2Max: 1.00,
                 s3Min: 0.00, s3Max: 0.20
             });
 
@@ -33,7 +33,7 @@
 
             const getSteadyState = (m) => {
                 let s = [0.33, 0.33, 0.34];
-                for (let i = 0; i < 60; i++) { // Increased iterations for stability
+                for (let i = 0; i < 60; i++) {
                     let next = [0, 0, 0];
                     for (let c = 0; c < 3; c++) {
                         for (let r = 0; r < 3; r++) { next[c] += s[r] * m[r][c]; }
@@ -49,14 +49,12 @@
 
                 for (let i = 0; i < 5000; i++) {
                     let tempM = [];
-                    // Generate random valid row-sum-1 matrices
                     for (let r = 0; r < 3; r++) {
                         let r1 = Math.random(), r2 = Math.random(), r3 = Math.random();
                         let sum = r1 + r2 + r3;
                         tempM.push([r1/sum, r2/sum, r3/sum]);
                     }
 
-                    // CALCULATE NET COST: Difference between End State and Start State
                     let netCost = 0;
                     for (let r = 0; r < 3; r++) {
                         for (let c = 0; c < 3; c++) {
@@ -87,15 +85,15 @@
                     data: {
                         datasets: [{
                             data: results,
-                            backgroundColor: results.map(d => d.win ? '#16a34a' : '#6366f1'),
-                            pointRadius: results.map(d => d.win ? 4 : 2)
+                            backgroundColor: results.map(d => d.win ? '#16a34a' : 'rgba(99, 102, 241, 0.2)'),
+                            pointRadius: results.map(d => d.win ? 5 : 2)
                         }]
                     },
                     options: {
                         responsive: true, maintainAspectRatio: false,
                         scales: {
-                            x: { min: 0, max: 1, title: { display: true, text: 'Steady State: S1 (X)' } },
-                            y: { min: 0, max: 1, title: { display: true, text: 'Steady State: S3 (Y)' } }
+                            x: { min: 0, max: 1, title: { display: true, text: 'Steady State S1' } },
+                            y: { min: 0, max: 1, title: { display: true, text: 'Steady State S3' } }
                         },
                         plugins: {
                             legend: { display: false },
@@ -123,7 +121,7 @@
                     <header className="bg-slate-900 text-white p-6 rounded-2xl shadow-xl border-b-4 border-indigo-500 flex justify-between items-center">
                         <div>
                             <h1 className="text-2xl font-black tracking-tight uppercase">Net-Cost Station</h1>
-                            <p className="text-indigo-400 text-xs font-mono tracking-widest uppercase italic">Displacement Logic Enabled</p>
+                            <p className="text-indigo-400 text-xs font-mono tracking-widest uppercase italic">Displacement Logic Active</p>
                         </div>
                         <div className="bg-slate-800 px-4 py-2 rounded-lg border border-slate-700">
                             <span className="text-slate-400 text-[10px] block uppercase font-bold text-center mb-1">Total Budget</span>
@@ -134,37 +132,28 @@
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                         <div className="lg:col-span-4 space-y-6">
                             <div className="bg-white p-6 rounded-2xl border shadow-sm">
-                                <h2 className="font-bold text-slate-800 mb-4 flex justify-between items-center">
-                                    <span>Initial Matrix & Costs</span>
-                                    <span className="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">Row Sum</span>
-                                </h2>
-                                {matrix.map((row, r) => {
-                                    const sum = getRowSum(r);
-                                    const isCorrect = Math.abs(sum - 1) < 0.001;
-                                    return (
-                                        <div key={r} className="mb-6 last:mb-0">
-                                            <div className="flex items-center space-x-2">
-                                                <div className={`text-[10px] font-bold w-12 h-6 flex items-center justify-center rounded ${isCorrect ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                                    Σ={sum.toFixed(2)}
+                                <h2 className="font-bold text-slate-800 mb-4 flex justify-between items-center text-sm uppercase tracking-tight">Initial Matrix & Costs</h2>
+                                {matrix.map((row, r) => (
+                                    <div key={r} className="mb-6 last:mb-0">
+                                        <div className="flex items-center space-x-2">
+                                            <div className="text-[10px] font-bold w-10 text-slate-400">Row {r+1}</div>
+                                            {row.map((val, c) => (
+                                                <div key={c} className="flex-1">
+                                                    <input type="number" step="0.01" className="border w-full p-1 rounded-t text-center text-sm font-bold" value={val} onChange={e => {
+                                                        const m2 = [...matrix]; m2[r][c] = parseFloat(e.target.value) || 0; setMatrix(m2);
+                                                    }} />
+                                                    <input type="number" className="border-x border-b w-full p-1 rounded-b bg-orange-50 text-[10px] text-orange-700 text-center font-bold" value={costs[r][c]} onChange={e => {
+                                                        const c2 = [...costs]; c2[r][c] = parseFloat(e.target.value) || 0; setCosts(c2);
+                                                    }} />
                                                 </div>
-                                                {row.map((val, c) => (
-                                                    <div key={c} className="flex-1">
-                                                        <input type="number" step="0.01" className="border w-full p-1 rounded-t text-center text-sm font-bold" value={val} onChange={e => {
-                                                            const m2 = [...matrix]; m2[r][c] = parseFloat(e.target.value) || 0; setMatrix(m2);
-                                                        }} />
-                                                        <input type="number" className="border-x border-b w-full p-1 rounded-b bg-orange-50 text-[10px] text-orange-700 text-center font-bold" value={costs[r][c]} onChange={e => {
-                                                            const c2 = [...costs]; c2[r][c] = parseFloat(e.target.value) || 0; setCosts(c2);
-                                                        }} />
-                                                    </div>
-                                                ))}
-                                            </div>
+                                            ))}
                                         </div>
-                                    );
-                                })}
+                                    </div>
+                                ))}
                             </div>
 
                             <div className="bg-white p-6 rounded-2xl border shadow-sm space-y-3">
-                                <h2 className="font-bold text-slate-800 border-b pb-2 text-sm uppercase">Required Stationary Range</h2>
+                                <h2 className="font-bold text-slate-800 border-b pb-2 text-sm uppercase tracking-tight">Stationary Targets (%)</h2>
                                 <div className="grid grid-cols-3 gap-3 mb-2 text-center text-[10px] font-bold text-slate-400 uppercase">
                                     <div>State</div><div>Min</div><div>Max</div>
                                 </div>
@@ -175,7 +164,7 @@
                                         <input type="number" step="0.01" className="border p-2 rounded text-center text-sm focus:ring-2 focus:ring-indigo-500" value={targets[`s${num}Max`]} onChange={e => setTargets({...targets, [`s${num}Max`]: parseFloat(e.target.value) || 0})} />
                                     </div>
                                 ))}
-                                <button onClick={runSimulation} className="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-xl font-black shadow-lg transition-all active:scale-95 uppercase">
+                                <button onClick={runSimulation} className="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-xl font-black shadow-lg transition-all active:scale-95 uppercase tracking-widest">
                                     Analyze Feasibility
                                 </button>
                             </div>
@@ -184,14 +173,26 @@
                         <div className="lg:col-span-8 bg-white p-6 rounded-2xl border shadow-sm flex flex-col h-[700px]">
                             <div className="flex justify-between items-start mb-4">
                                 <div>
-                                    <h2 className="font-bold text-slate-800 text-lg">Reachable Displacement Cloud</h2>
-                                    <p className="text-xs text-slate-500">Green = Reached targets with current Budget</p>
+                                    <h2 className="font-bold text-slate-800 text-lg uppercase tracking-tight">Feasibility Cloud</h2>
+                                    <p className="text-xs text-slate-500 italic">Net Displacement from Start Matrix</p>
                                 </div>
                                 {results.length > 0 && (
-                                    <div className={`px-4 py-2 rounded-full font-bold text-sm border-2 ${results.some(r => r.win) ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700'}`}>
-                                        {results.some(r => r.win) ? '✓ ASSIGNMENT SOLVABLE' : '✗ UNREACHABLE UNDER BUDGET'}
+                                    <div className={`px-4 py-2 rounded-full font-bold text-sm border-2 ${results.some(r => r.win) ? 'bg-green-100 border-green-200 text-green-700' : 'bg-red-100 border-red-200 text-red-700'}`}>
+                                        {results.filter(r => r.win).length} Solvable Paths Found
                                     </div>
                                 )}
                             </div>
-                            
-                            <div className="
+                            <div className="relative flex-grow">
+                                <canvas ref={chartRef}></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<TeacherSolver />);
+    </script>
+</body>
+</html>
